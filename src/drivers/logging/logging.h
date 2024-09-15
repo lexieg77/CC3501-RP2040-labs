@@ -10,5 +10,5 @@ enum LogLevel {
 /// Set the log level. Messages with a level below this threshold will be discarded.
 void setLogLevel(LogLevel newLevel);
 
-/// Log a new message.
+/// Log a new message
 void log(LogLevel level, const char *msg);

@@ -2,38 +2,28 @@
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/pio.h"
+#include "main.h"
 
 #include "WS2812.pio.h" // This header file gets produced during compilation from the WS2812.pio file
 #include "drivers/logging/logging.h"
+#include "drivers/leds/leds.h"
+#include "drivers/accel/accel.h"
 
-#define LED_PIN 14
+uint32_t led_data[12] = {0};
+uint8_t data_out[6];
 
-int main()
-{
+int main() {
     stdio_init_all();
+    initialise_led();
+    initialise_accel();
+    log(LogLevel::INFORMATION, "Hello world"); // Test for log system
+    accel_read_register(WHO_AM_I, data_out);
+    accel_write_register(CTRL_REG1, 0x17);
 
-    // Initialise PIO0 to control the LED chain
-    uint pio_program_offset = pio_add_program(pio0, &ws2812_program);
-    ws2812_program_init(pio0, 0, pio_program_offset, LED_PIN, 800000, false);
-    uint32_t led_data [1];
-
-    for (;;) {
-        // Test the log system
-        log(LogLevel::INFORMATION, "Hello world");
-
-        // Turn on the first LED to be a certain colour
-        uint8_t red = 0;
-        uint8_t green = 0;
-        uint8_t blue = 255;
-        led_data[0] = (red << 24) | (green << 16) | (blue << 8);
-        pio_sm_put_blocking(pio0, 0, led_data[0]);
-        sleep_ms(500);
-
-        // Set the first LED off 
-        led_data[0] = 0;
-        pio_sm_put_blocking(pio0, 0, led_data[0]);
-        sleep_ms(500);
+    while(true){
+        AccelVector vec = accel_raw_data();
+        set_accel_leds(vec, led_data); 
+        update_led(led_data);     
     }
-
     return 0;
-}
+} 
